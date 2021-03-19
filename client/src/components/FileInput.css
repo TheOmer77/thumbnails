@@ -1,0 +1,7 @@
+.file-input input[type='file'] {
+  display: none;
+}
+.file-input label {
+  display: block;
+  width: 100%;
+}
