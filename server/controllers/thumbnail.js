@@ -1,6 +1,4 @@
 const ffmpeg = require('fluent-ffmpeg');
-const ffprobe = require('ffprobe');
-const ffprobeStatic = require('ffprobe-static');
 
 exports.upload = (req, res) => {
   const { file } = req;
@@ -33,17 +31,20 @@ exports.getThumbnail = async (req, res) => {
    */
 
   try {
-    // Get the duration of the video
-    const { streams } = await ffprobe(filepath, { path: ffprobeStatic.path });
-    const { duration } = streams[0];
-
-    ffmpeg(filepath)
-      // Take a screenshot from the middle of the video (duration / 2)
-      .setStartTime(parseFloat(duration) / 2)
-      .outputOptions('-vframes 1')
-      .outputOptions('-f image2pipe')
-      .outputOptions('-vcodec png')
-      .writeToStream(res);
+    ffmpeg.ffprobe(filepath, (err, data) => {
+      if (!err) {
+        // Get the duration of the video
+        const { streams } = data;
+        const { duration } = streams[0];
+        ffmpeg(filepath)
+          // Take a screenshot from the middle of the video (duration / 2)
+          .setStartTime(parseFloat(duration) / 2)
+          .outputOptions('-vframes 1')
+          .outputOptions('-f image2pipe')
+          .outputOptions('-vcodec png')
+          .writeToStream(res);
+      }
+    });
   } catch (error) {
     res.status(500).send({ success: false, error });
   }
@@ -52,10 +53,9 @@ exports.getThumbnail = async (req, res) => {
 exports.getInfo = async (req, res) => {
   const { filename } = req.params;
   try {
-    const info = await ffprobe(`uploads/${filename}`, {
-      path: ffprobeStatic.path,
-    });
-    res.send({ success: true, info });
+    ffmpeg.ffprobe(`uploads/${filename}`, (err, data) =>
+      res.send({ success: true, info: data })
+    );
   } catch (error) {
     res.status(500).send({ success: false, error });
   }
