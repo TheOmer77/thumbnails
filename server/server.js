@@ -3,6 +3,7 @@ const cors = require('cors');
 const multer = require('multer');
 const { v4: uuidv4 } = require('uuid');
 const path = require('path');
+const { mkdir } = require('fs');
 
 const thumbnailRouter = require('./routes/thumbnail');
 
@@ -12,7 +13,7 @@ const app = express();
 
 // Setup multer
 const storage = multer.diskStorage({
-  destination: (req, file, cb) => cb(null, 'uploads/'),
+  destination: (req, file, cb) => cb(null, 'tmp/'),
   filename: (req, file, cb) =>
     cb(null, `${uuidv4()}${path.extname(file.originalname)}`),
 });
@@ -30,7 +31,9 @@ app.use(multer({ storage, fileFilter }).single('file'));
 // Routes
 app.use('/api', thumbnailRouter);
 
-app.listen(PORT, () => {
-  console.clear();
-  console.log(`\x1b[42m\x1b[30mServer is listening on port ${PORT}.\x1b[0m`);
-});
+mkdir('tmp/', () =>
+  app.listen(PORT, () => {
+    console.clear();
+    console.log(`\x1b[42m\x1b[30mServer is listening on port ${PORT}.\x1b[0m`);
+  })
+);
